@@ -5,6 +5,8 @@ import os
 
 # Function to generate a random password with letters and numbers only
 def generate_password(length=12):
+    if length <= 0:
+        raise ValueError("Password length must be a positive integer.")
     characters = string.ascii_letters + string.digits
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
@@ -21,9 +23,15 @@ def load_passwords(file_name):
             return json.load(file)
     except FileNotFoundError:
         return {}
+    except json.JSONDecodeError:
+        print("Error: The file is not a valid JSON.")
+        return {}
 
 # Function to add a new password entry
 def add_password(passwords, app_name, username, password):
+    if not app_name or not username:
+        print("Error: Application name and username cannot be empty.")
+        return
     passwords[app_name] = {'username': username, 'password': password}
 
 # Function to retrieve a password for a given app
@@ -53,9 +61,21 @@ def main():
         choice = input("Enter your choice (1-5): ")
 
         if choice == '1':
-            length = int(input("Enter the length of the password to generate: "))
-            new_password = generate_password(length)
-            print(f"Generated Password: {new_password}")
+            try:
+                length = int(input("Enter the length of the password to generate: "))
+                new_password = generate_password(length)
+                print(f"Generated Password: {new_password}")
+
+                add_to_list = input("Do you want to add this password to the password list? (yes/no): ").strip().lower()
+                if add_to_list == 'yes':
+                    app_name = input("Enter the application name: ")
+                    username = input("Enter the username/email: ")
+                    add_password(passwords, app_name, username, new_password)
+                    save_passwords(passwords, 'passwords.json')
+                    print(f"Password saved for {app_name}")
+
+            except ValueError as e:
+                print(f"Error: {e}")
 
         elif choice == '2':
             app_name = input("Enter the application name: ")
